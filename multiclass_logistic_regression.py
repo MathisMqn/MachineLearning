@@ -14,8 +14,14 @@ class MulticlassLogisticRegression:
         self.final_accuracy = None
 
     def _initialize(self):
-        self.W = [np.random.randn(self.n_features, 1) for _ in range(self.n_classes)]
+        self.W = np.random.randn(self.n_classes, self.n_features, 1)
         self.b = np.random.randn(self.n_classes, 1)
+
+    @staticmethod
+    def _normalize_dataset(X):
+        normalized_dataset = (X - np.min(X)) / (np.max(X) - np.min(X))
+    
+        return normalized_dataset
 
     def _softmax(self, X):
         Z = []
@@ -39,16 +45,16 @@ class MulticlassLogisticRegression:
     def _update_gradients(self, A, X, y):
         m = len(y)
         dZ = A - y
-        dW = [np.zeros_like(w) for w in self.W]
-        db = [np.zeros_like(b) for b in self.b]
+        dW = np.zeros_like(self.W)
+        db = np.zeros_like(self.b)
 
-        for i in range(len(self.W)):
-            dz = dZ[:, i].reshape(-1, 1)
+        for i in range(self.n_classes):
+            dz = dZ[:, i].reshape((m, 1))
             dW[i] = X.T.dot(dz) / m
             db[i] = np.sum(dz) / m
 
-            self.W[i] -= self.learning_rate * dW[i]
-            self.b[i] -= self.learning_rate * db[i]
+        self.W -= self.learning_rate * dW
+        self.b -= self.learning_rate * db
 
     def display_dataset(self, X, y):
         if X.shape[1] == 2:
@@ -88,6 +94,9 @@ class MulticlassLogisticRegression:
             raise Exception("You must first train the model")
 
     def train(self, X, y, n_iters=1000, learning_rate=0.1):
+        if not np.all((X >= 0) & (X <= 1)):
+            X = self._normalize_dataset(X)
+
         self.learning_rate = learning_rate
         self.n_classes = len(np.unique(y))
         self.n_features = X.shape[1]
@@ -110,9 +119,11 @@ class MulticlassLogisticRegression:
 
     def predict(self, X):
         if self.W is not None:
+            if not np.all((X >= 0) & (X <= 1)):
+                X = self._normalize_dataset(X)
+
             A = self._softmax(X)
 
             return np.argmax(A, axis=1)
         else:
             raise Exception("You must first train the model")
-        

@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, accuracy_score
 
 
 def get_confusion_matrix(predicted_values: np.ndarray, true_values: np.ndarray) -> np.ndarray:
@@ -21,11 +19,13 @@ def get_confusion_matrix(predicted_values: np.ndarray, true_values: np.ndarray) 
         Confusion matrix
     """
 
+    from sklearn.metrics import confusion_matrix
+
     matrix = confusion_matrix(predicted_values, true_values)
 
     return matrix
 
-def get_accuracy_score(predicted_values: np.ndarray, true_values: np.ndarray) -> np.ndarray:
+def get_accuracy_score(predicted_values: np.ndarray, true_values: np.ndarray) -> float:
     """
     Calculates the accuracy score of a classification task.
 
@@ -38,9 +38,11 @@ def get_accuracy_score(predicted_values: np.ndarray, true_values: np.ndarray) ->
 
     Returns
     -------
-    np.ndarray
+    float
         Accuracy score
     """
+
+    from sklearn.metrics import accuracy_score
 
     accuracy = accuracy_score(predicted_values, true_values)
 
@@ -68,13 +70,27 @@ class Dataset:
         Dataset loaded from the CSV file
     """
 
-    def __init__(self, path: str, delimiter: str or None=None):
+    def __init__(self, path: str, delimiter: str=None):
         self.path = path
         self.delimiter = delimiter
         self.dataset = self._load()
 
     @staticmethod
-    def _normalize(features: np.ndarray) -> np.ndarray:
+    def normalize(features: np.ndarray) -> np.ndarray:
+        """
+        Normalizes a dataset using the min-max normalization.
+
+        Parameters
+        ----------
+        features : np.ndarray
+            Features of the dataset
+
+        Returns
+        -------
+        np.ndarray
+            Normalized dataset
+        """
+
         dataset = (features - np.min(features)) / (np.max(features) - np.min(features))
 
         return dataset
@@ -98,6 +114,8 @@ class Dataset:
         tuple
             A tuple containing the training and testing sets
         """
+
+        from sklearn.model_selection import train_test_split
 
         features_train, features_test, labels_train, labels_test = train_test_split(features, labels, test_size=test_size, random_state=random_state)
 
@@ -148,7 +166,7 @@ class Dataset:
 
         return self.dataset
 
-    def to_numpy(self, target: str, dataframe: pd.DataFrame or None=None) -> tuple:
+    def to_numpy(self, target: str, dataframe: pd.DataFrame=None) -> tuple:
         """
         Converts the dataset to a NumPy array.
 
@@ -177,6 +195,6 @@ class Dataset:
         features = self.dataset.drop(target, axis=1).values
         labels = self.dataset[target].values.reshape(-1, 1)
 
-        normalized_features = self._normalize(features)
+        normalized_features = self.normalize(features)
 
         return normalized_features, labels
